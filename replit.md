@@ -1,115 +1,233 @@
 # Barton ATIS Cloud
 
-## Overview
+A modern, accessible ATIS (Aeronautical Terminal Information Service) web application for Barton Aerodrome (EGCB). Built with React, TypeScript, and shadcn/ui to provide pilots and aerodrome operators with real-time aviation information in a beautiful, user-friendly interface.
 
-Barton ATIS Cloud is a real-time aviation operations application that provides live Aerodrome Terminal Information Service (ATIS) data for Barton Aerodrome (EGCB). The application displays current weather conditions, runway status, QNH/QFE pressure settings, NOTAMs (Notices to Airmen), and historical weather statistics. It serves both tower operators (desktop) and pilots (mobile) with a professional, accessible interface optimized for aviation operations.
+## Features
 
-The application is built as a full-stack TypeScript application with a React frontend and Express backend, designed to display critical aviation information with clarity and immediate scannability.
+### Core Functionality
+- **Live ATIS Dashboard**: Real-time display of current aerodrome information including:
+  - Information code (alphabet letter identifier)
+  - Runway in use and circuit direction
+  - QNH and QFE pressure settings
+  - Touch and go permissions
+  - Airfield status and closing times
+  
+- **Weather Observation**: Comprehensive weather display with:
+  - Full METAR string in monospace font
+  - Wind direction and speed (with gusts)
+  - Temperature and dewpoint
+  - Visibility and cloud coverage
+  - Meteorological warnings with visual alerts
+  
+- **Runway Status**: Real-time grid showing all four runways:
+  - 08L/26R, 08R/26L, 02/20, 13/31
+  - Current surface conditions
+  - Operational status
+  
+- **NOTAMs & Operational Briefing**: 
+  - Active NOTAMs sorted by severity
+  - Color-coded priority (high, medium, low)
+  - Valid from/to timestamps
+  - Category badges (Fuel, Aerodrome, Taxiway, etc.)
+  
+- **Historical Statistics**: Interactive data visualization with:
+  - Pressure trends (QNH/QFE over time)
+  - Wind speed and direction charts
+  - Temperature trends
+  - Quick filters (24hrs, 7 days, 30 days)
+  - Custom date range selection
+  
+- **Document Downloads**:
+  - Generate PDF downloads for NOTAMs
+  - Generate aerodrome information packets
+  - Selectable categories and sections
+  - Timestamped downloads
 
-## User Preferences
+### User Experience
+- **Auto-refresh**: Dashboard updates every 60 seconds
+- **Dark Mode**: Full theme support with persistent preferences
+- **Responsive Design**: Optimized for both desktop and mobile
+  - Desktop: Left sidebar navigation
+  - Mobile: Bottom tab navigation
+- **Accessible**: ARIA labels, semantic HTML, keyboard navigation
+- **Professional Design**: Aviation-focused aesthetic with proper typography hierarchy
 
-Preferred communication style: Simple, everyday language.
+## Technology Stack
 
-## System Architecture
+### Frontend
+- **React 18** with TypeScript
+- **Vite** for build tooling
+- **Tailwind CSS** for styling
+- **shadcn/ui** component library
+- **Recharts** for data visualization
+- **wouter** for client-side routing
+- **TanStack Query** for data fetching and caching
+- **date-fns** for date handling
 
-### Frontend Architecture
+### Backend
+- **Express.js** REST API
+- **In-memory storage** for development
+- **PDF generation** for document downloads
 
-**Framework**: React 18 with TypeScript, built using Vite as the build tool and bundler.
+## Project Structure
 
-**UI Component System**: shadcn/ui design system with Radix UI primitives. This choice prioritizes:
-- Accessibility-first components for safety-critical aviation context
-- Clear information hierarchy through typography and spacing
-- Professional aesthetic suitable for operational environments
-- Responsive design supporting both desktop (tower operators) and mobile (pilots)
+```
+├── client/
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── atis/              # ATIS-specific components
+│   │   │   │   ├── current-atis-card.tsx
+│   │   │   │   ├── weather-card.tsx
+│   │   │   │   ├── runway-status-grid.tsx
+│   │   │   │   ├── notam-list.tsx
+│   │   │   │   ├── header.tsx
+│   │   │   │   ├── metric-display.tsx
+│   │   │   │   └── status-badge.tsx
+│   │   │   ├── charts/            # Data visualization
+│   │   │   │   ├── pressure-chart.tsx
+│   │   │   │   ├── wind-chart.tsx
+│   │   │   │   └── temperature-chart.tsx
+│   │   │   ├── ui/                # shadcn/ui components
+│   │   │   ├── theme-provider.tsx
+│   │   │   └── theme-toggle.tsx
+│   │   ├── pages/
+│   │   │   ├── dashboard.tsx      # Main ATIS view
+│   │   │   ├── historical.tsx     # Historical statistics
+│   │   │   └── documents.tsx      # Document downloads
+│   │   ├── App.tsx
+│   │   └── index.css
+│   └── index.html
+├── server/
+│   ├── routes.ts                  # API endpoints
+│   └── storage.ts                 # Data storage layer
+├── shared/
+│   └── schema.ts                  # Shared TypeScript types
+└── design_guidelines.md           # Design system documentation
+```
 
-**Styling**: Tailwind CSS with custom design tokens defined in CSS variables. The theme system supports light/dark modes with carefully calibrated colors for readability. Design guidelines emphasize clarity over decoration, using spacing primitives (2, 4, 6, 8, 12, 16, 20) for consistent layout.
+## API Endpoints
 
-**Typography**: Inter font family for all UI text with a hierarchical scale from page titles (text-3xl) down to timestamps (text-xs font-mono), ensuring scannable data presentation.
+### GET /api/atis/current
+Returns current ATIS data including weather, runways, and NOTAMs.
 
-**State Management**: TanStack Query (React Query) for server state management with auto-refresh capabilities (60-second intervals for current ATIS data). No global client state management library is used; component-level state is managed with React hooks.
+**Response:**
+```json
+{
+  "atis": {
+    "informationCode": "U",
+    "airfieldStatus": "Airfield Open",
+    "runwayInUse": "26L",
+    "circuitDirection": "RH",
+    "qnh": 993,
+    "qfe": 991,
+    "touchAndGo": "Permitted",
+    "closingTime": "1655z"
+  },
+  "weather": {
+    "metar": "EGCB 231605Z 33009KT 9999 SCT024 FEW040 11/05 Q0993",
+    "windDirection": 330,
+    "windSpeed": 9,
+    "temperature": 11,
+    "dewpoint": 5,
+    "visibility": "9999m",
+    "cloudCoverage": "SCT024 FEW040",
+    "warnings": "W TO NW WINDS..."
+  },
+  "runways": [...],
+  "notams": [...],
+  "lastUpdated": "2025-10-23T18:07:39.000Z"
+}
+```
 
-**Routing**: Wouter for lightweight client-side routing with three main routes:
-- Dashboard (`/`) - Current ATIS information and live data
-- Historical (`/historical`) - Time-series charts and data analysis
-- Documents (`/documents`) - NOTAM downloads and aerodrome information
+### GET /api/atis/historical
+Returns historical data points for charts.
 
-**Data Visualization**: Recharts library for historical weather trend charts (pressure, wind, temperature).
+**Query Parameters:**
+- `from`: ISO date string (start date)
+- `to`: ISO date string (end date)
 
-### Backend Architecture
+**Response:**
+```json
+[
+  {
+    "timestamp": "2025-10-23T12:00:00.000Z",
+    "qnh": 993,
+    "qfe": 991,
+    "temperature": 11,
+    "windSpeed": 9,
+    "windDirection": 330
+  }
+]
+```
 
-**Framework**: Express.js server with TypeScript, using ESM module format.
+### POST /api/documents/notams
+Generates PDF document with selected NOTAM categories.
 
-**API Design**: RESTful JSON API with three primary endpoints:
-- `GET /api/atis/current` - Returns current ATIS snapshot
-- `GET /api/atis/historical?from=<date>&to=<date>` - Returns time-series data
-- `POST /api/documents/notams` - Filters and returns NOTAM documents
+**Request Body:**
+```json
+{
+  "categories": ["aerodrome", "operational", "navigation"]
+}
+```
 
-**Development Mode**: Vite middleware integration for hot module replacement during development. Production mode serves pre-built static assets from `dist/public`.
+### POST /api/documents/aerodrome
+Generates PDF document with selected aerodrome information.
 
-**Data Storage Strategy**: Currently uses in-memory storage (`MemStorage` class) with seeded mock data. The storage interface (`IStorage`) is designed to be swapped for a database implementation without changing the API layer. Database schema is defined using Drizzle ORM with PostgreSQL dialect.
+**Request Body:**
+```json
+{
+  "sections": ["general", "runways", "frequencies", "procedures"]
+}
+```
 
-**Type Safety**: Shared TypeScript types between client and server via `shared/schema.ts`, ensuring type consistency across the full stack. Drizzle-zod integration generates runtime validators from database schemas.
+## Development
 
-### Database Layer (Prepared but Not Active)
+The application is already configured and running. Key commands:
 
-**ORM**: Drizzle ORM configured for PostgreSQL with schema definition in `shared/schema.ts`.
+- `npm run dev` - Starts both frontend and backend servers
+- Frontend runs on Vite dev server
+- Backend runs on Express (port 5000)
 
-**Schema Design**: Five main tables modeling aviation data:
-- `atis_info` - Current ATIS broadcast information (code, QNH/QFE, runway, circuit direction)
-- `weather_obs` - Weather observations including METAR strings and parsed values
-- `runway_status` - Individual runway condition and surface state
-- `notams` - Notices to Airmen with categorization and severity
-- `historical_stats` (referenced in types) - Aggregated statistics
+## Design System
 
-**Migration Strategy**: Drizzle Kit configured with migrations directory, supporting schema evolution with `npm run db:push`.
+The application follows a professional aviation design system:
 
-**Connection**: Configured to use Neon serverless Postgres driver via `DATABASE_URL` environment variable. The application will use Postgres when the environment variable is provided, otherwise falls back to in-memory storage.
+- **Colors**: Professional blue primary color with semantic status colors
+  - Green: Open/Normal
+  - Amber: Caution/Warnings
+  - Red: Closed/Critical
+  
+- **Typography**: 
+  - Sans-serif (Inter) for UI
+  - Monospace (JetBrains Mono) for METAR and technical data
+  
+- **Spacing**: Consistent 4px grid system
+- **Components**: Reusable shadcn/ui components with aviation-specific styling
 
-### Deployment Architecture
+## Future Enhancements
 
-**Build Process**: Two-stage build:
-1. Frontend: Vite bundles React application to `dist/public`
-2. Backend: esbuild bundles server code to `dist/index.js` with external packages
+- Multi-aerodrome support with dynamic configuration
+- Real aviation weather API integration (NOAA, Aviation Weather Center)
+- User accounts and favorite aerodrome management
+- Push notifications for critical weather changes
+- Printable flight briefing pack generator
+- WebSocket for real-time updates
+- Historical data export (CSV/Excel)
 
-**Production Server**: Node.js serves both API endpoints and static frontend files from a single Express instance.
+## Aviation Conventions
 
-**Environment Configuration**: Requires `DATABASE_URL` for production database connection. Development mode runs without database using mock data.
+The application follows standard aviation practices:
+- All times displayed in UTC (Coordinated Universal Time) with 'z' suffix
+- Runway designators in uppercase format (08L/26R)
+- METAR format weather observations
+- Standard NOTAM categorization
+- QNH (altimeter setting) and QFE (airfield pressure) in hectopascals
 
-## External Dependencies
+## Notes
 
-### Third-Party UI Libraries
-- **Radix UI**: Unstyled, accessible component primitives (accordion, dialog, dropdown, popover, select, etc.)
-- **shadcn/ui**: Pre-styled components built on Radix UI following New York design variant
-- **Lucide React**: Icon library for consistent iconography
-- **Recharts**: Chart library for data visualization
-- **Embla Carousel**: Touch-enabled carousel component
-
-### Core Framework Dependencies
-- **React & React DOM**: v18+ for UI rendering
-- **Wouter**: Lightweight routing (replaces React Router)
-- **TanStack Query**: Server state management and caching
-- **React Hook Form**: Form state management with Zod validation
-- **date-fns**: Date manipulation and formatting
-
-### Backend Dependencies
-- **Express**: Web server framework
-- **Drizzle ORM**: Type-safe database ORM
-- **@neondatabase/serverless**: Serverless Postgres driver
-- **Zod**: Runtime type validation
-- **connect-pg-simple**: PostgreSQL session store (prepared for future auth)
-
-### Build & Development Tools
-- **Vite**: Frontend build tool and dev server
-- **TypeScript**: Type system across full stack
-- **Tailwind CSS**: Utility-first CSS framework
-- **esbuild**: Backend bundler for production
-- **tsx**: TypeScript execution for development
-- **Drizzle Kit**: Database migration tool
-
-### Replit Integration
-- **@replit/vite-plugin-runtime-error-modal**: Development error overlay
-- **@replit/vite-plugin-cartographer**: Code navigation in Replit
-- **@replit/vite-plugin-dev-banner**: Development mode indicator
-
-### Fonts
-- **Google Fonts**: Inter (UI text) and JetBrains Mono (monospace for METAR/data)
+This is a demonstration application with seeded data. For production use:
+1. Replace in-memory storage with persistent database
+2. Integrate with official aviation weather APIs
+3. Implement authentication and authorization
+4. Add comprehensive error logging and monitoring
+5. Set up automated NOTAM updates from official sources

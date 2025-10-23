@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Download, FileText, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import type { CurrentAtisData } from "@shared/schema";
 
 export default function Documents() {
   const { toast } = useToast();
@@ -22,7 +23,7 @@ export default function Documents() {
     "procedures",
   ]);
 
-  const { data: currentAtis } = useQuery({
+  const { data: currentAtis } = useQuery<CurrentAtisData>({
     queryKey: ["/api/atis/current"],
   });
 

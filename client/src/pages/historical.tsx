@@ -11,7 +11,7 @@ import { WindChart } from "@/components/charts/wind-chart";
 import { TemperatureChart } from "@/components/charts/temperature-chart";
 import { CalendarIcon, TrendingUp, AlertCircle } from "lucide-react";
 import { format, subDays } from "date-fns";
-import type { HistoricalDataPoint } from "@shared/schema";
+import type { HistoricalDataPoint, CurrentAtisData } from "@shared/schema";
 
 export default function Historical() {
   const [dateRange, setDateRange] = useState({
@@ -19,7 +19,7 @@ export default function Historical() {
     to: new Date(),
   });
 
-  const { data: currentAtis } = useQuery({
+  const { data: currentAtis } = useQuery<CurrentAtisData>({
     queryKey: ["/api/atis/current"],
   });
 

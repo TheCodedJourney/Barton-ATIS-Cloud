@@ -49,13 +49,13 @@ export class MemStorage implements IStorage {
       informationCode: "U",
       timestamp: now,
       airfieldStatus: "Airfield Open",
-      nextStatusUpdate: "Next Day",
+      nextStatusUpdate: "Next Day" as string | null,
       touchAndGo: "Permitted",
       runwayInUse: "26L",
       circuitDirection: "RH",
       qnh: 993,
       qfe: 991,
-      closingTime: "1655z",
+      closingTime: "1655z" as string | null,
     };
     this.atisInfo.set(currentAtis.id, currentAtis);
 
@@ -63,15 +63,15 @@ export class MemStorage implements IStorage {
       id: randomUUID(),
       timestamp: now,
       metar: "EGCB 231605Z 33009KT 9999 SCT024 FEW040 11/05 Q0993",
-      windDirection: 330,
-      windSpeed: 9,
+      windDirection: 330 as number | null,
+      windSpeed: 9 as number | null,
       windGust: null,
-      visibility: "9999m",
-      temperature: 11,
-      dewpoint: 5,
-      pressure: 993,
-      cloudCoverage: "SCT024 FEW040",
-      warnings: "W TO NW WINDS WITH MEAN 20-22KT AT TIMES AND GUSTS OF 28-35KT ARE LIKELY TO OCCUR. Valid: 231200 to 231800 UTC",
+      visibility: "9999m" as string | null,
+      temperature: 11 as number | null,
+      dewpoint: 5 as number | null,
+      pressure: 993 as number | null,
+      cloudCoverage: "SCT024 FEW040" as string | null,
+      warnings: "W TO NW WINDS WITH MEAN 20-22KT AT TIMES AND GUSTS OF 28-35KT ARE LIKELY TO OCCUR. Valid: 231200 to 231800 UTC" as string | null,
     };
     this.weatherObs.set(currentWeather.id, currentWeather);
 
@@ -146,7 +146,7 @@ export class MemStorage implements IStorage {
         severity: notamData.severity,
         content: notamData.content,
         validFrom: notamData.validFrom,
-        validTo: notamData.validTo,
+        validTo: notamData.validTo as Date | null,
         active: true,
       };
       this.notams.set(notam.id, notam);
