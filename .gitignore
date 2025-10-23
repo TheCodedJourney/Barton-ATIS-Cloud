@@ -38,6 +38,7 @@ bower_components
 build/Release
 
 # Dependency directories
+Frontend/node_modules/
 node_modules/
 jspm_packages/
 
@@ -137,3 +138,7 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+.DS_Store
+server/public
+*.tar.gz

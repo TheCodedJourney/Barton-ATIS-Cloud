@@ -1,0 +1,11 @@
+{
+  "name": "barton-atis-api",
+  "version": "1.0.0",
+  "description": "API for Barton ATIS Cloud",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "TheCodedJourney",
+  "license": "ISC"
+}
