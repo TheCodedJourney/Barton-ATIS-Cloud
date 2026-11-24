@@ -21,6 +21,7 @@ export interface Atis {
   nextStatusUpdate: string | null;
   touchAndGo: string | null;
   closes: string | null;
+  sunset: string | null;
   runway: string | null;
   circuit: string | null;
   qnh: number | null;

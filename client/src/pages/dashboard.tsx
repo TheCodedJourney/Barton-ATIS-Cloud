@@ -14,6 +14,7 @@ const LINKS = [
   ["Inbound PPR", "https://www.egcbatis.co.uk/inboundppr"],
   ["Account Portal", "https://egcb.redatlas.co.uk/self-service"],
   ["Visitor Payments", "https://egcb.redatlas.co.uk/self-service/visitor?embedded=true"],
+  ["Webcams", "https://webcams.bartonaerodrome.co.uk"],
   ["Official ATIS", OFFICIAL],
 ] as const;
 const STALE_AFTER_S = 90;
@@ -177,7 +178,7 @@ function Board({ atis, now }: { atis: Atis; now: number }) {
         <Stat label="Runway in use" value={atis.runway} sub={atis.circuit && `${atis.circuit} circuit`} />
         <Stat label="Manchester QNH" value={atis.qnh} unit="hPa" />
         <Stat label="Barton QFE" value={atis.qfe} unit="hPa" />
-        <Stat label="Airfield closes" value={atis.closes} unit={atis.closes && /^\d{4}$/.test(atis.closes) ? "z" : undefined} />
+        <Stat label="Airfield closes" value={atis.closes} unit={atis.closes && /^\d{4}$/.test(atis.closes) ? "z" : undefined} sub={atis.sunset && `Sunset ${atis.sunset}${/^\d{4}$/.test(atis.sunset) ? "z" : ""}`} />
       </div>
 
       {atis.warnings && (

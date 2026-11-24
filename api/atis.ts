@@ -1,44 +1,48 @@
 import type { Atis, Wx } from "../shared/atis";
 
 // ATIS_SOURCE lets dev/tests point at a saved copy of the page.
-const SOURCE = process.env.ATIS_SOURCE ?? "https://egcbatis.co.uk/main/index.php";
+const SOURCE = process.env.ATIS_SOURCE ?? "https://egcbatis.co.uk/";
 
-// Labels printed by the source page. A field's value is the text between its
-// label and whichever label comes next, so reordering upstream doesn't break us.
+// Labels printed by the source page (Next.js site, live since Nov 2026). A field's
+// value is the text between its label and whichever label comes next, so
+// reordering upstream doesn't break us. Each label starts a line.
 const LABELS = {
-  info: /INFO:?/,
-  status: /AIRFIELD STATUS:/,
-  nextUpdate: /NEXT (?:STATUS UPDATE|INSPECTION):/,
-  touchAndGo: /TOUCH AND GO'?s:/i,
-  rwy: /RWY/,
-  qnh: /M\/CR QNH:?/,
-  qfe: /BARTON QFE:?/,
-  closes: /AIRFIELD CLOSES:/,
-  runways: /RUNWAY STATUS:/,
-  briefing: /BRIEFING:/,
-  observation: /WEATHER OBSERVATION[^:\n]*:/,
-  warnings: /MET WARNINGS:/,
+  notice: /^Please book out/m,
+  info: /^Information\b/m,
+  nextUpdate: /^Next Status Update:/m,
+  closes: /^Airfield closes/m,
+  sunset: /^Sunset/m,
+  rwy: /^Runway \/ circuit/m,
+  qnh: /^Manchester QNH/m,
+  qfe: /^Barton QFE/m,
+  touchAndGo: /^Touch and go'?s/im,
+  runways: /^Runway status/m,
+  weather: /^Weather$/m,
+  observation: /^Weather observation[^\n]*/m,
+  warnings: /^Met warnings/m,
+  briefing: /^Briefing/m,
+  station: /^Wind & weather station/m,
 } as const;
 
-const ENTITIES: Record<string, string> = {
-  "&amp;": "&", "&nbsp;": " ", "&lt;": "<", "&gt;": ">", "&quot;": '"', "&#39;": "'",
-};
+const ENTITIES: Record<string, string> = { amp: "&", nbsp: " ", lt: "<", gt: ">", quot: '"' };
 
 function toText(html: string): string {
   return html
     .replace(/<!--[\s\S]*?-->/g, "")
-    .replace(/<(script|style)[\s\S]*?<\/\1>/gi, "")
-    .replace(/<\/?(br|tr|td|p|div|table)\b[^>]*>/gi, "\n")
-    .replace(/<[^>]*>/g, "")
-    .replace(/&(amp|nbsp|lt|gt|quot|#39);/g, (m) => ENTITIES[m])
-    .replace(/[ \t]+/g, " ");
+    .replace(/<(script|style|svg)[\s\S]*?<\/\1>/gi, "")
+    .replace(/<\/?(br|tr|td|p|div|table|li|ul|h\d|section)\b[^>]*>/gi, "\n")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&(?:#x([\da-f]+)|#(\d+)|(\w+));/gi, (m, hex, dec, name) =>
+      hex ? String.fromCodePoint(parseInt(hex, 16)) : dec ? String.fromCodePoint(+dec) : ENTITIES[name] ?? m)
+    .replace(/[ \t]+/g, " ")
+    .replace(/^ | $/gm, "");
 }
 
 const oneLine = (s: string | undefined) =>
   s?.replace(/\s+/g, " ").trim().replace(/(?<=\d)\s*z$/i, "") || null;
 
 const lines = (s: string | undefined) =>
-  s?.split("\n").map((l) => l.trim()).join("\n").replace(/\n{3,}/g, "\n\n").trim() || null;
+  s?.split("\n").map((l) => l.trim()).filter(Boolean).join("\n") || null;
 
 const int = (s: string | undefined) => {
   const m = s?.match(/\d{3,4}/);
@@ -65,9 +69,7 @@ export function parseObservation(obs: string): Wx | null {
 }
 
 export function parseAtis(html: string, fetchedAt = new Date()): Atis {
-  const body = html.slice(Math.max(0, html.search(/<body/i)));
-  const noticeHtml = body.match(/style_highlight_data_text">([\s\S]*?)<\/span>/)?.[1];
-  const text = toText(noticeHtml ? body.replace(noticeHtml, "") : body);
+  const text = toText(html.slice(Math.max(0, html.search(/<body/i))));
 
   const found = Object.entries(LABELS)
     .map(([key, re]) => ({ key, m: text.match(re) }))
@@ -79,32 +81,36 @@ export function parseAtis(html: string, fetchedAt = new Date()): Atis {
     s[f.key as keyof typeof LABELS] = text.slice(f.end, found[i + 1]?.start);
   });
 
-  const status = oneLine(s.status);
+  // Info block: letter + issue time, then the status line(s), e.g. "J 12:30" / "Airfield Open".
+  const info = (s.info ?? "").split("\n").map((l) => l.trim()).filter((l) => l && l !== "—");
+  const issued = info[0]?.match(/^([A-Z])\s+(\d{2}):?(\d{2})$/);
+  const status = oneLine((issued ? info.slice(1) : info).join(" "));
   const observation = oneLine(s.observation);
   return {
     fetchedAt: fetchedAt.toISOString(),
-    sourceUpdated: text.match(/updated\s+(\d[\d:]*\s+[\d/]+)/i)?.[1] ?? null,
+    sourceUpdated: text.match(/Data refreshed\s+([\d/]+ [\d:]+)/)?.[1] ?? null,
     parsed: status !== null,
     raw: status === null ? lines(text)?.slice(0, 1500) ?? null : null,
     status,
-    infoLetter: s.info?.match(/\b[A-Z]\b/)?.[0] ?? null,
-    infoTime: s.info?.match(/\d{4}/)?.[0] ?? null,
+    infoLetter: issued?.[1] ?? null,
+    infoTime: issued ? issued[2] + issued[3] : null,
     nextStatusUpdate: oneLine(s.nextUpdate),
     touchAndGo: oneLine(s.touchAndGo),
     closes: oneLine(s.closes),
+    sunset: oneLine(s.sunset),
     runway: s.rwy?.match(/\b\d{2}[LRC]?\b/)?.[0] ?? null,
     circuit: s.rwy?.match(/\b(LH|RH|left|right)\b/i)?.[0].toUpperCase() ?? null,
     qnh: int(s.qnh),
     qfe: int(s.qfe),
     runways: Array.from(
-      (s.runways ?? "").matchAll(/(\d{2}[LRC]?\/\d{2}[LRC]?)\s*-([^\n]*)/g),
-      (m) => ({ id: m[1], state: oneLine(m[2]) }),
+      (s.runways ?? "").matchAll(/^(\d{2}[LRC]?) ?\/ ?(\d{2}[LRC]?)\n?([^\n]*)/gm),
+      (m) => ({ id: `${m[1]}/${m[2]}`, state: oneLine(m[3]) }),
     ),
     briefing: lines(s.briefing),
     observation,
     wx: observation ? parseObservation(observation) : null,
     warnings: lines(s.warnings),
-    notice: noticeHtml ? oneLine(toText(noticeHtml)) : null,
+    notice: s.notice ? oneLine("Please book out" + s.notice) : null,
   };
 }
 
